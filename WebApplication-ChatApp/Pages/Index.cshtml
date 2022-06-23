@@ -1,0 +1,122 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+
+<div class="container">
+
+    <div id="userinfo" class="row">
+        <label for="userName">Please Input your userName</label>
+        <input type="text" class="form-control" id="username" name="username" autocomplete="off" />
+        <button type="button" class="btn btn-block" onclick="SetUsername();">Join</button>
+    </div>
+    <a href="D:\Backend\.netCore-Chat-APP\WebApplication-ChatApp\WebApplication-ChatApp\Pages\Index.cshtml">D:\Backend\.netCore-Chat-APP\WebApplication-ChatApp\WebApplication-ChatApp\Pages\Index.cshtml</a>
+
+    <div id="messagearea" class="row" style="display:none">
+        <div>Joined as:<b><span id="username1">Not Set</span></b> </div>
+        <hr />
+        <div class="row">
+            <div class="col-6">
+
+                <ul id="messagesList"></ul>
+
+            </div>
+        </div>
+        <hr />
+        <input type="text" id="message" autocomplete="off" />
+        <input type="button" id="sendButton" class="sendButton" value="send Message" />
+    </div>
+</div>
+
+<script  src="~/js/signalr/dist/browser/signalr.js"></script>
+<script>
+    "use strict";
+    var connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
+    var username = "";
+    var messages = [];
+    var outPut = [];
+
+
+    //Disable send button until connection is established
+    document.getElementById("sendButton").disabled = true;
+
+    connection.on("ReceiveMessage", function (user, message) {
+        console.log(user,message);
+        var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        var encodeMsg = user + "says : " + msg;
+        var li = document.createElement("li");
+        li.textContent = encodedMsg;
+
+        messages.push(
+            {
+                user: 'Receiver',
+                message: li.textContent
+            }
+        );
+       
+        for (var i = 0; i < messages.length; i++) {
+            outPut.push('<li  class="receiv">' + messages[i]['message'] + '</li>');
+            receiv.style.float = 'left';
+            receiv.style.color='red';
+        }
+        div.innerHTML = outPut;
+        console.log(li.textContent);
+        document.getElementById("messagesList").appendChild(li);
+    });
+
+
+
+    connection.start().then(function () {
+        document.getElementById("sendButton").disabled = false;
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    document.getElementById("sendButton").addEventListener("click", function (event) {
+        var message = document.getElementById("message").value;       
+        var div = document.getElementById("messagesList")
+
+        connection.invoke("SendMessage", username, message).then(function () {
+            messages.push(
+                {
+                    user: 'me',
+                    message: message
+                }
+            );
+           
+            for (var i = 0; i < messages.length; i++) {
+                
+                    outPut.push("<li>" + messages[i]['message'] +"</li>" );
+              
+            }
+            div.innerHTML = outPut;
+            document.getElementById("message").value = "";
+        }).catch(function (err) {
+            return console.error(err);
+        });
+        event.preventDefault();
+    });
+
+    function SetUsername() {
+     var name=   $('#username').val();
+        console.log($('#username').val());
+
+        if (name===" ") {
+            alert("Please enter your Username");
+            return;
+        }
+
+        username = name;
+        document.getElementById("userinfo").style.display = 'none';
+        document.getElementById("messagearea").style.display = 'block';
+        document.getElementById("username1").innerText = name;
+    }
+
+</script>
